@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Live Check</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .live-status {
+            margin-top: 20px;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Check YouTube Channel Live Status</h1>
+    <div id="channel-info">
+        <!-- Channel information will be displayed here -->
+    </div>
+    <div class="live-status" id="live-status">
+        <!-- Live status will be displayed here -->
+    </div>
+
+    <script>
+        const API_KEY = 'AIzaSyAIvqQehYZ4sTHxx9yjDcGFAPovtcMgybo'; // 주신 API 키
+        const CHANNEL_USERNAME = 'BBENG'; // 주신 채널의 사용자 이름
+
+        async function getChannelId(username) {
+            const response = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=id&forUsername=${username}&key=${API_KEY}`);
+            const data = await response.json();
+            if (data.items.length > 0) {
+                return data.items[0].id;
+            } else {
+                throw new Error('Channel not found');
+            }
+        }
+
+        async function checkLiveStatus(channelId) {
+            const response = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${channelId}&type=video&eventType=live&key=${API_KEY}`);
+            const data = await response.json();
+            
+            const liveStatusElement = document.getElementById('live-status');
+            const channelInfoElement = document.getElementById('channel-info');
+
+            if (data.items.length > 0) {
+                const liveVideo = data.items[0];
+                liveStatusElement.textContent = 'This channel is currently live!';
+                channelInfoElement.innerHTML = `
+                    <h2>${liveVideo.snippet.channelTitle}</h2>
+                    <p><strong>Title:</strong> ${liveVideo.snippet.title}</p>
+                    <a href="https://www.youtube.com/watch?v=${liveVideo.id.videoId}" target="_blank">Watch Live</a>
+                `;
+            } else {
+                liveStatusElement.textContent = 'This channel is not live right now.';
+            }
+        }
+
+        async function init() {
+            try {
+                const channelId = await getChannelId(CHANNEL_USERNAME);
+                await checkLiveStatus(channelId);
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('live-status').textContent = 'Error retrieving live status.';
+            }
+        }
+
+        // Check live status when the page loads
+        window.onload = init;
+    </script>
+</body>
+</html>
